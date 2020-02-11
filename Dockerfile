@@ -11,13 +11,20 @@ RUN apt-get update -y -q && \
 # Copy over the application source and install all requirements into the
 # virtualenv.
 WORKDIR /app
-RUN python -m venv /env
+
+ENV VIRTUAL_ENV=/env
+RUN python3 -m venv $VIRTUAL_ENV
+ENV PATH="$VIRTUAL_ENV/bin:$PATH"
+
+# Add requirements file separately to avoid rerunning pip when any of the
+# app directory changes
 ADD requirements.txt /app/requirements.txt
-RUN /env/bin/pip install -r /app/requirements.txt
+RUN pip install -r /app/requirements.txt
+
+# Add rest of application directory
 ADD . /app
 
 EXPOSE 8080
 
-# Activate the virtualenv (so that python points to the right thing in honcho)
-# and then start all honcho processes.
-CMD . /env/bin/activate; /env/bin/honcho start
+# Start all honcho processes
+CMD ["honcho", "start"]
